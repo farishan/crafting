@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <ul id="ui_selected_items"></ul>
+    <button id="ui_craft">craft</button>
+
+    <hr><ul id="ui_items"></ul>
+<script>
+
+var items = [
+    new Item('item1', false),
+    new Item('item2', ['item1', 'item3']),
+    new Item('item3', ['item1', 'item2']),
+];
+
+var inventory = [
+    new Item('item1', false),
+    new Item('item2', false)
+];
+
+var selectedItems = [];
+
+render(inventory, el('ui_items'));
+
+el('ui_craft').addEventListener('click', function(){
+    if(selectedItems.length == 2){
+        var item1 = selectedItems[0];
+        var item2 = selectedItems[1];
+
+        for (let index = 0; index < items.length; index++) {
+            const element = items[index];
+            if(craft(item1.name, item2.name, element.recipe)){
+                inventory.push(element);
+                render(inventory, el('ui_items'))
+            }
+        }
+    }
+});
+
+function craft(item1, item2, recipe){
+    if(
+        item1 == recipe[0] && item2 == recipe[1] ||
+        item1 == recipe[1] && item2 == recipe[0]
+    ){
+        return true;
+    }
+
+    return false;
+}
+
+function render(array, target){
+    target.innerHTML = '';
+    for (let index = 0; index < array.length; index++) {
+        const element = array[index];
+        var div = document.createElement('div');
+        div.style.border = '1px solid';
+        div.style.display = 'inline-block';
+        div.dataset.itemId = element._id;
+        div.onclick = function(){
+            selectItem(element);
+        }
+        div.innerHTML = element.name;
+        target.appendChild(div);
+    }
+}
+
+function renderSelecteds(array, target){
+    target.innerHTML = '';
+    for (let index = 0; index < array.length; index++) {
+        const element = array[index];
+        if(element){
+            var div = document.createElement('div');
+            div.style.border = '1px solid';
+            div.style.display = 'inline-block';
+            div.dataset.itemId = element._id;
+            div.onclick = function(){
+                selectItem(element);
+            }
+            div.innerHTML = element.name;
+            target.appendChild(div);
+        }
+    }
+}
+
+function selectItem(obj){
+    let id = obj._id;
+    console.log('selectedItem: ', obj)
+
+    if(selectedItems.find(x => x._id === id) === undefined){
+        // The item is not selected, then:
+        // Add to selected items
+        selectedItems.push(obj);
+
+        // Remove from inventory
+        inventory.splice(inventory.findIndex(x => x._id === id), 1);
+        render(inventory, el('ui_items'));
+    }else{
+        // The item is selected, then:
+        // Remove from selected items
+        selectedItems.splice(selectedItems.findIndex(x => x._id === id), 1);
+
+        // Add to inventory
+        inventory.push(obj);
+    }
+
+    renderSelecteds(selectedItems, el('ui_selected_items'));
+    render(inventory, el('ui_items'));
+}
+
+function Item(name, recipe) {
+    this._id = ID(),
+    this.name = name,
+    this.recipe = recipe
+
+    return this;
+}
+
+function el(id){
+    return document.getElementById(id);
+}
+
+function ID() {
+    return '_' + Math.random().toString(36).substr(2, 9);
+};
+</script>
+</body>
+</html>
